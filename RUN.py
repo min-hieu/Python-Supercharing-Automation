@@ -345,7 +345,7 @@ class Ui_MainWindow(object):
 
 
 def writeHTML(tlist):
-    with open('HTML-test.html', 'w') as html:
+    with open('result.html', 'w') as html:
 
         html.write('<center><font face="consolas" size="15">Supercharging Result</font></center><br><br>')
 
