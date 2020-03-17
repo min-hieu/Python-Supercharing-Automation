@@ -7,6 +7,7 @@ from PyQt5.QtCore import pyqtSlot
 from matplotlib.backends.qt_compat import QtCore, QtWidgets
 from matplotlib.backends.backend_qt5agg import (FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 from supernew import superSeq
 
 
@@ -14,8 +15,8 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         self.MainWindow = MainWindow
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(900, 600)
-        MainWindow.setMinimumSize(QtCore.QSize(900, 600))
+        MainWindow.resize(1171, 600)
+        MainWindow.setMinimumSize(QtCore.QSize(1171, 600))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.centralwidget)
@@ -141,6 +142,9 @@ class Ui_MainWindow(object):
         self.checkAdd = QtWidgets.QCheckBox(self.centralwidget)
         self.checkAdd.setObjectName("checkAdd")
         self.horizontalLayout_5.addWidget(self.checkAdd)
+        self.checkSeperate = QtWidgets.QCheckBox(self.centralwidget)
+        self.checkSeperate.setObjectName("checkSeperate")
+        self.horizontalLayout_5.addWidget(self.checkSeperate)
         self.buttonSupercharge = QtWidgets.QPushButton(self.centralwidget)
         self.buttonSupercharge.setObjectName("buttonSupercharge")
         self.horizontalLayout_5.addWidget(self.buttonSupercharge)
@@ -161,9 +165,39 @@ class Ui_MainWindow(object):
         spacerItem13 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem13)
         self.horizontalLayout.addLayout(self.verticalLayout)
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_3.setContentsMargins(-1, -1, 9, -1)
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.labelResult = QtWidgets.QLabel(self.centralwidget)
+        self.labelResult.setObjectName("labelResult")
+        self.verticalLayout_3.addWidget(self.labelResult)
+        self.outputResult = QtWidgets.QTextEdit(self.centralwidget)
+        self.outputResult.setMinimumSize(QtCore.QSize(213, 345))
+        self.outputResult.setObjectName("outputResult")
+        self.verticalLayout_3.addWidget(self.outputResult)
+        spacerItem14 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_3.addItem(spacerItem14)
+        self.horizontalLayout_10 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_10.setContentsMargins(-1, 0, -1, -1)
+        self.horizontalLayout_10.setObjectName("horizontalLayout_10")
+        spacerItem15 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_10.addItem(spacerItem15)
+        self.checkPrevious = QtWidgets.QCheckBox(self.centralwidget)
+        self.checkPrevious.setObjectName("checkPrevious")
+        self.horizontalLayout_10.addWidget(self.checkPrevious)
+        self.buttonExport = QtWidgets.QPushButton(self.centralwidget)
+        self.buttonExport.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.buttonExport.setObjectName("buttonExport")
+        self.horizontalLayout_10.addWidget(self.buttonExport)
+        spacerItem16 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_10.addItem(spacerItem16)
+        self.verticalLayout_3.addLayout(self.horizontalLayout_10)
+        spacerItem17 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_3.addItem(spacerItem17)
+        self.horizontalLayout.addLayout(self.verticalLayout_3)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 900, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1171, 21))
         self.menubar.setObjectName("menubar")
         self.menuHelp = QtWidgets.QMenu(self.menubar)
         self.menuHelp.setObjectName("menuHelp")
@@ -194,6 +228,8 @@ class Ui_MainWindow(object):
         self.buttonClear.clicked.connect(lambda: self.clearGraph(MainWindow.ax))
 
         self.buttonGraph.clicked.connect(lambda: self.drawGraph(MainWindow.ax))
+
+        self.buttonExport.clicked.connect(lambda: self.exportHTML())
 
         #=============== Testing ================
         self.inputSeq.setText('''MLPGVGLTPS AAQTARQHPK MHLAHSTLKP AAHLIGDPSK QNSLLWRANT
@@ -232,7 +268,7 @@ class Ui_MainWindow(object):
         sSeq = superSeq(self.inputSeq.toPlainText(),bindingSite=bSite)
 
         
-        x, y1, y2 = sSeq.superGraph(thres=thres,no=sSeq.bindingSite)
+        x, y1, y2, newSeq, mutated = sSeq.superGraph(thres=thres,no=sSeq.bindingSite)
         if not self.checkAdd.isChecked():
             ax.clear()
             ax.plot(x, y1, color='blue')
@@ -240,9 +276,22 @@ class Ui_MainWindow(object):
             ax.axhline(thres, 0, 1, alpha=0.6, color="#00F481")
         else:
             ax.plot(x,y2)
+
+        if self.checkSeperate.isChecked():
+            plt.plot(x, y1, color='blue')
+            plt.plot(x, y2, color='orange')
+            plt.axhline(thres, 0, 1, alpha=0.6, color="#00F481")
+            plt.show()        
     
         ax.figure.canvas.draw()
-        print('pressed')
+        mutatedText = '[ ' + ', '.join(map(str, [x+1 for x in mutated])) + ' ]'
+        resultText = ''.join(newSeq) + '\n' + mutatedText + '\n\n'
+        if self.checkPrevious.isChecked():
+            oldResult = self.outputResult.toPlainText()
+            self.outputResult.setText(oldResult + resultText)
+        else:
+            self.outputResult.setText(resultText)
+
 
     @pyqtSlot()
     def clearGraph(self, ax):
@@ -260,6 +309,16 @@ class Ui_MainWindow(object):
 
         ax.figure.canvas.draw()
 
+    @pyqtSlot()
+    def exportHTML(self):
+        text = self.outputResult.toPlainText()
+        tList = text.split('\n\n')
+        tList.remove('')
+        
+        writeHTML(tList)
+
+        print('exported')
+
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -274,11 +333,40 @@ class Ui_MainWindow(object):
         self.labelConsurfStatus.setText(_translate("MainWindow", "Not Imported"))
         self.buttonImportConsurf.setText(_translate("MainWindow", "Import"))
         self.checkAdd.setText(_translate("MainWindow", "add"))
+        self.checkSeperate.setText(_translate("MainWindow", "seperate window"))
         self.buttonSupercharge.setText(_translate("MainWindow", "Supercharge"))
         self.buttonClear.setText(_translate("MainWindow", "clear"))
+        self.labelResult.setText(_translate("MainWindow", "Result"))
+        self.checkPrevious.setText(_translate("MainWindow", "Keep Previous"))
+        self.buttonExport.setText(_translate("MainWindow", "Export"))
         self.menuHelp.setTitle(_translate("MainWindow", "File"))
         self.actionImport_Fasta.setText(_translate("MainWindow", "Import"))
         self.actionExport.setText(_translate("MainWindow", "Export"))
+
+
+def writeHTML(tlist):
+    with open('HTML-test.html', 'w') as html:
+
+        html.write('<center><font face="consolas" size="15">Supercharging Result</font></center><br><br>')
+
+        for text in tlist:
+            seq, mu_index = text.split('\n')
+            mu_index = list(map(int,mu_index[1:-1].split(', ')))
+            mu_index.sort()
+            mu_out = map(str, mu_index[:])
+            newSeq = ''
+            for i,e in enumerate(seq):
+                if len(mu_index)>0 and i == mu_index[0]:
+                    mu_index.pop(0)
+                    newSeq+='<span style="background-color: #FFFF00">'+e+'</span>'
+                else: newSeq+=e
+                if i+1!=0 and (i+1)%10==0:newSeq+='&nbsp;&nbsp;&nbsp;'
+                if i+1!=0 and (i+1)%50==0:newSeq+='<br>'
+            
+            newSeq = "<font face='consolas' size='5'>"+newSeq+'</font><br><br>'
+            newSeq += "<font face='consolas' size='5'> [ "+', '.join(mu_out)+' ]</font><br><br><br>'
+
+            html.write(newSeq)
 
 
 if __name__ == "__main__":
